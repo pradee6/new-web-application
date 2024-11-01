@@ -22,10 +22,14 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allow cross-origin requests
 app.config['SESSION_COOKIE_SECURE'] = True  # Use True if your app is served over HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
 app.config['SESSION_PERMANENT'] = False  # Set to False to allow sessions to be temporary
+app.config['SESSION_COOKIE_DOMAIN'] = '35.178.250.213'  # Web server IP
+app.config['SESSION_COOKIE_NAME'] = 'my_flask_session'
 
 # Other configurations and route definitions here
 app.secret_key = '441f6ab2f10c9580d68929df890f99eb'
 app.config['SESSION_TYPE'] = 'filesystem'
+# Initialize the session
+Session(app)
 # Configure SQLAlchemy to connect with your RDS MySQL database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://admin:admin123@portfolio.ctg2ooeguv5i.eu-west-2.rds.amazonaws.com:3306/prod'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -109,9 +113,9 @@ def login():
             if user.password == password:
                 session['user_id'] = user.id
                 logging.info(f'Session user_id set: {session["user_id"]}')
-                print(f"Session after setting: {session}")
-                print(f"Cookies after setting session: {request.cookies}")
-                return jsonify({'message': 'Login successful.'}), 200
+
+                # Return user ID along with success message
+                return jsonify({'message': 'Login successful.', 'userId': user.id}), 200
             else:
                 return jsonify({'message': 'Invalid email or password.'}), 401
         else:
@@ -120,16 +124,12 @@ def login():
         logging.error(f'Error in login: {e}')
         return jsonify({'message': 'Login failed.'}), 500
 
-@app.route('/get-profile', methods=['GET'])
-def get_profile():
+@app.route('/get-profile/<int:user_id>', methods=['GET'])
+def get_profile(user_id):
     print("Incoming cookies:", request.cookies)
     print("Session before retrieval:", session)
 
-    user_id = session.get('user_id')
-    print("Session User ID at get-profile:", user_id)
-
-    if not user_id:
-        return jsonify({"message": "User not logged in."}), 403
+    print("User ID from request:", user_id)
 
     user = User.query.get(user_id)
     if user:
@@ -143,6 +143,7 @@ def get_profile():
         })
     else:
         return jsonify({"message": "User not found."}), 404
+
 @app.route('/send-otp', methods=['POST'])
 def send_otp():
     try:
