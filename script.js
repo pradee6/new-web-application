@@ -49,11 +49,18 @@ document.getElementById("loginForm")?.addEventListener("submit", function (e) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log(data);
+        console.log(data);  // Log the entire response for debugging
         console.log('Current Cookies:', document.cookie); // Log cookies here
         document.getElementById("loginMessage").innerText = data.message;
         document.getElementById("loginMessage").classList.add("fade-in");
+
         if (data.message === 'Login successful.') {
+            // Store user ID in local storage
+            localStorage.setItem('userId', data.userId); // Ensure this line runs correctly
+
+            // Debugging log to verify local storage
+            console.log('Stored user ID in local storage:', localStorage.getItem('userId'));
+
             // Redirect to dashboard after successful login
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
@@ -65,6 +72,7 @@ document.getElementById("loginForm")?.addEventListener("submit", function (e) {
         document.getElementById("loginMessage").innerText = 'Login failed. Please check your credentials.';
     });
 });
+
 
 // Handle OTP for reset password
 document.getElementById("sendOtp")?.addEventListener("click", function () {
@@ -244,8 +252,8 @@ document.addEventListener('DOMContentLoaded', () => {
         websitesList.classList.add('hidden');
     });
 
-    // Profile Button Functionality
-document.getElementById('show-profile-btn').addEventListener('click', () => {
+   // Profile Button Functionality
+   document.getElementById('show-profile-btn').addEventListener('click', () => {
     const profileSection = document.getElementById('profile-section');
     const registeredNameElement = document.getElementById('registered-name');
     const registeredDobElement = document.getElementById('registered-dob');
@@ -260,14 +268,16 @@ document.getElementById('show-profile-btn').addEventListener('click', () => {
     document.getElementById('categories-container').classList.add('hidden');
     websitesList.classList.add('hidden');
 
+    // Get user ID from local storage
+    const userId = localStorage.getItem('userId');
+
     // Fetch user profile data directly
-    fetch('http://13.40.94.202:5000/get-profile', {
+    fetch(`http://13.40.94.202:5000/get-profile/${userId}`, { // Use userId in the URL
         method: 'GET',
-        credentials: 'include', // Include session data
+        credentials: 'include', // Include session data if necessary
     })
     .then(response => {
         if (!response.ok) {
-            // Log the status code for debugging
             console.error('Network response was not ok:', response.status, response.statusText);
             throw new Error('Network response was not ok: ' + response.statusText);
         }
@@ -352,3 +362,5 @@ document.getElementById('show-profile-btn').addEventListener('click', () => {
     // Logout button functionality
     document.getElementById('logout-btn').addEventListener('click', () => {
         window.location.href = 'login.html';
+    });
+});
